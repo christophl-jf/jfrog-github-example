@@ -3,6 +3,9 @@ on:
     push:
         branches:
 
+    # Allows you to run this workflow manually from the Actions tab 
+    workflow_dispatch:
+
 permissions:
   actions: read # for detecting the Github Actions environment.
   id-token: write # for creating OIDC tokens for signing.
@@ -12,8 +15,8 @@ jobs:
     build-publish-python:
         runs-on: ubuntu-latest              
         env:
-          DOCKER_REPO: 'codeninjas-proj-docker-local'
-          IMAGE_NAME: 'my-very-cool-image:${{ github.run_number }}'
+          DOCKER_REPO: 'christophl-docker-dev'
+          IMAGE_NAME: 'jfrog-python-example:${{ github.run_number }}'
           JF_URL: https://${{ vars.JF_URL }}/
           DOCKER_CLI_EXPERIMENTAL: enabled
         steps:
@@ -23,9 +26,10 @@ jobs:
               id: setup-cli
               env:
                 JF_URL: https://${{ vars.JF_URL }}/
-                JF_PROJECT: ${{ vars.JF_PROJECT }}
+                JF_PROJECT: 'christophl'
               with:
-                  oidc-provider-name: jfrog-github-oidc
+                  oidc-provider-name: christophl-github
+                  oidc-audience: christophl-audience
 
             - name: Checkout the repository
               uses: actions/checkout@v4
@@ -40,7 +44,7 @@ jobs:
             - name: configure jfrog environment
               run: |
                 # Use a curated repository for python dependencies resolution
-                jf pip-config --repo-resolve=codeninjas-proj-python-virtual   
+                jf pip-config --repo-resolve=christophl-pypi-virtual   
 
             - name: configure environment
               run: |    
@@ -58,9 +62,11 @@ jobs:
 
             - name: publish python package
               run: |
-                jf rt u dist/ codeninjas-proj-python-virtual/example-projects/ --module=jfrog-python-example
+                jf rt u dist/ christophl-pypi-virtual/example-projects/ --module=jfrog-python-example
 
-      
+            #- name: Set up Docker Buildx
+            #  uses: docker/setup-buildx-action@v3
+
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3                 
 
@@ -78,7 +84,7 @@ jobs:
                 platforms: linux/amd64,linux/arm64
                 install: true
 
-           # - name: docker build through 
+           # - name: docker build
            #   run: |  
            #     docker buildx ls
            #     jf docker --version
@@ -92,12 +98,12 @@ jobs:
               run: |  
                 jf docker build --tag ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-amd64 --platform  linux/amd64 --load .
                 #docker images
-                jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-amd64                
+                #jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-amd64                
                 jf docker push ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-amd64
                 
                 jf docker build --tag ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-arm64 --platform  linux/arm64 --load .
                 #docker images
-                jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-arm64                
+                #jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-arm64                
                 jf docker push ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}-arm64
                 
                 #echo "docker images scanned, now lets push a fat manifest and the images"
@@ -120,12 +126,12 @@ jobs:
 
             - name: publish build info
               run: |
-                jf rt build-collect-env 
+                jf rt build-collect-env
                 jf rt build-add-dependencies .
                 jf rt build-add-git
                 jf rt build-publish
 
-            - name: build scan
-              run: |            
-                jf build-scan
+            #- name: build scan
+            #  run: |            
+            #    jf build-scan
 
