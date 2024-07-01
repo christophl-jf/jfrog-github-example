@@ -13,6 +13,10 @@ name: "Frogbot Scan and Fix"
 on:
   push:
     branches: [ "main" ]
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
 permissions:
   contents: write
   pull-requests: write
@@ -30,7 +34,8 @@ jobs:
 
       - uses: jfrog/frogbot@v2
         with:
-          oidc-provider-name: jfrog-github-oidc
+          oidc-provider-name: christophl-github
+          oidc-audience: christophl-audience
         env:
           # [Mandatory if the two conditions below are met]
           # 1. The project uses npm, yarn 2, NuGet or .NET to download its dependencies
