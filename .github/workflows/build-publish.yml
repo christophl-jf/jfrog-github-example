@@ -26,7 +26,7 @@ jobs:
               id: setup-cli
               env:
                 JF_URL: https://${{ vars.JF_URL }}/
-                JF_PROJECT: 'christophl'
+                #JF_PROJECT: 'christophl'
               with:
                   oidc-provider-name: christophl-github
                   oidc-audience: christophl-audience
